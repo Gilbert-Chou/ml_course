@@ -106,8 +106,7 @@ class Calc_result:
 def sort_cmp(elem):
     return elem.get_dist()
 
-if __name__ == '__main__':
-    dataset = read_dataset()
+def knn_execute(dataset):
     train_data, train_label, test_data, test_label = train_test_split(dataset)
     res = []
 
@@ -124,12 +123,41 @@ if __name__ == '__main__':
     for i in range(0, len(test_data)):
         res[i].sort(key=sort_cmp)
 
+    accuracy = []
     #計算結果
     for i in range(3, 16):
-        print("k = " + str(i) + " accuracy is ", end='')
+        # print("k = " + str(i) + " accuracy is ", end='')
         predict = knn_with_all(res, i)
         accu = calc_accuracy(predict, test_label)
-        print(accu)
-    
+        # print(accu)
+        accuracy.append(accu)
+
+    return accuracy
+
+if __name__ == '__main__':
+    dataset = read_dataset()
+    accu_array = []
+    accuracy = []
+
+    for i in range(0, 13):
+        accuracy.append(0.0)
+
+    #跑10次取平均
+    for i in range(0, 10):
+        accu_array.append(knn_execute(dataset))
+        for j in range(0, len(accu_array[i])):
+            accuracy[j] += accu_array[i][j]
+ 
+    for i in range(3, 16):
+        print("k = " + str(i) + " accuracy is ", end='')
+        accuracy[i-3] = accuracy[i-3]/10
+        print(accuracy[i-3])
+
+     #畫圖
+    import numpy as np
+    import matplotlib.pyplot as plt
+
+    plt.plot(range(3, 16), accuracy)
+    plt.show()
 
     
