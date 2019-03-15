@@ -1,13 +1,12 @@
-
 def read_dataset():
     f = open("breast-cancer-wisconsin.data", "r")
     cnt = 0
     data = dict()
 
     for d in f:
+        #因為dataset有問號的資訊，無法被判斷數值，所以此資料跳過
         if d.find('?') == -1:
             dd = d[:len(d)-1].split(",", 11)
-            # data[str(dd[0])] = (dd[1], dd[2], dd[3], dd[4], dd[5], dd[6], dd[7], dd[8], dd[9])
             data[cnt] = (dd[1], dd[2], dd[3], dd[4], dd[5], dd[6], dd[7], dd[8], dd[9], dd[10])
             cnt += 1
         
@@ -22,9 +21,7 @@ def train_test_split(data):
     test_data = dict()
     test_label = dict()
 
-    # print(data[0])
     random.shuffle(data)
-    # print(data[0])
 
     train_cnt = 0
     test_cnt = 0
@@ -114,6 +111,7 @@ if __name__ == '__main__':
     train_data, train_label, test_data, test_label = train_test_split(dataset)
     res = []
 
+    #計算所有測資的距離
     for i in range(0, len(test_data)):
         tmp = []
         for j in range(len(train_data)):
@@ -122,19 +120,16 @@ if __name__ == '__main__':
         
         res.append(tmp)
 
+    #排序計算後距離
     for i in range(0, len(test_data)):
         res[i].sort(key=sort_cmp)
 
+    #計算結果
     for i in range(3, 16):
         print("k = " + str(i) + " accuracy is ", end='')
         predict = knn_with_all(res, i)
         accu = calc_accuracy(predict, test_label)
         print(accu)
-    # print(predict)
-    # print("")
-    # print("")
-    # print("")
-    # print(test_label)
     
 
     
