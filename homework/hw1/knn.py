@@ -1,24 +1,16 @@
+
 def read_dataset():
     f = open("breast-cancer-wisconsin.data", "r")
     cnt = 0
     data = dict()
 
     for d in f:
-        # print("No." + str(cnt) + ": " + d)
-        dd = d[:len(d)-1].split(",", 11)
-        # data[str(dd[0])] = (dd[1], dd[2], dd[3], dd[4], dd[5], dd[6], dd[7], dd[8], dd[9])
-        data[cnt] = (dd[1], dd[2], dd[3], dd[4], dd[5], dd[6], dd[7], dd[8], dd[9], dd[10])
+        if d.find('?') == -1:
+            dd = d[:len(d)-1].split(",", 11)
+            # data[str(dd[0])] = (dd[1], dd[2], dd[3], dd[4], dd[5], dd[6], dd[7], dd[8], dd[9])
+            data[cnt] = (dd[1], dd[2], dd[3], dd[4], dd[5], dd[6], dd[7], dd[8], dd[9], dd[10])
+            cnt += 1
         
-
-        #print data for test 
-        # print(data[cnt], end='')
-        # print(" Status: ", end='')
-        # if label[cnt] == True:
-        #     print("Benign")
-        # else:
-        #     print("Malignant")
-        cnt += 1
-
     f.close()
 
     return data
@@ -66,9 +58,83 @@ def euclidean_distance(x, y):
 
     return math.sqrt(sum)
 
+def knn_with_all(res, k = 3):
+    predict = dict()
+
+    for i in range(0, len(res)):
+        predict[i] = knn(res[i], k)
+
+    return predict
+
+def knn(one_res, k):
+    t = 0
+    f = 0
+    if k > len(one_res):
+        return False
+
+    for i in range(1, k):
+        if one_res[i].get_label() == True:
+            t += 1
+        else:
+            f += 1
+    
+    if t >= f:
+        return True
+    
+    return False
+
+def calc_accuracy(expect, actual):
+    right = 0
+    wrong = 0
+
+    for i in range(0, len(expect)):
+        if expect[i] == actual[i]:
+            right += 1
+        else:
+            wrong += 1
+
+    return right/(right + wrong)
+
+class Calc_result:
+    def __init__(self, dist, label):
+        self.dist = dist
+        self.label = label
+    
+    def get_dist(self):
+        return self.dist
+    
+    def get_label(self):
+        return self.label
+
+def sort_cmp(elem):
+    return elem.get_dist()
+
 if __name__ == '__main__':
     dataset = read_dataset()
     train_data, train_label, test_data, test_label = train_test_split(dataset)
-    print(euclidean_distance(train_data[0], test_data[0]))
-    # print(train_data[0])
-    # print(len(train_data[0]))
+    res = []
+
+    for i in range(0, len(test_data)):
+        tmp = []
+        for j in range(len(train_data)):
+            dist = euclidean_distance(test_data[i], train_data[j])
+            tmp.append(Calc_result(dist, train_label[j]))
+        
+        res.append(tmp)
+
+    for i in range(0, len(test_data)):
+        res[i].sort(key=sort_cmp)
+
+    for i in range(3, 16):
+        print("k = " + str(i) + " accuracy is ", end='')
+        predict = knn_with_all(res, i)
+        accu = calc_accuracy(predict, test_label)
+        print(accu)
+    # print(predict)
+    # print("")
+    # print("")
+    # print("")
+    # print(test_label)
+    
+
+    
