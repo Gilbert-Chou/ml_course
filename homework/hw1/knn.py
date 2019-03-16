@@ -14,6 +14,7 @@ def read_dataset():
 
     return data
 
+#分資料集 training set：test set = 7 : 3
 def train_test_split(data):
     import random
     train_data = dict()
@@ -55,6 +56,7 @@ def euclidean_distance(x, y):
 
     return math.sqrt(sum)
 
+#算所有test data的class
 def knn_with_all(res, k = 3):
     predict = dict()
 
@@ -106,6 +108,7 @@ class Calc_result:
 def sort_cmp(elem):
     return elem.get_dist()
 
+#執行knn演算法
 def knn_execute(dataset):
     train_data, train_label, test_data, test_label = train_test_split(dataset)
     res = []
@@ -124,7 +127,7 @@ def knn_execute(dataset):
         res[i].sort(key=sort_cmp)
 
     accuracy = []
-    #計算結果
+    #計算結果k = 3 ~ 15
     for i in range(3, 16):
         # print("k = " + str(i) + " accuracy is ", end='')
         predict = knn_with_all(res, i)
