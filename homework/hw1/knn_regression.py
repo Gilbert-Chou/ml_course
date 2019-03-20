@@ -1,60 +1,158 @@
+def read_dataset():
+    from sklearn import preprocessing
+    import numpy as np
+    f = open("machine.data", "r")
+    cnt = 0
+    data = []
 
-import numpy as np
-import matplotlib.pyplot as plt
-from sklearn.neighbors import KNeighborsRegressor
- 
- 
-n_dots = 40
-X = 5 * np.random.rand(n_dots, 1)
-y = np.cos(X).ravel()
-print(X)
-#add noise
-y += 0.1 * np.random.rand(n_dots) - 0.1
- 
-#KNN Regression
-k = 5
-knn = KNeighborsRegressor(k)
-knn.fit(X,y)
-prec = knn.score(X, y)  #计算拟合曲线针对训练样本的拟合准确性
-print(prec)
- 
-#generate enough predict data
-T = np.linspace(0, 5, 500)[:, np.newaxis]
-y_pred = knn.predict(T)
- 
-#draw regress curve
-plt.figure(figsize=(16, 10), dpi = 81)
-plt.scatter(X, y, c='g', label='data', s=100) #训练样本
-plt.scatter(T, y_pred, c='k', label='prediction', lw=2) #拟合曲线
-plt.axis('tight')
-plt.title('KNN regression (k =%i)'%k)
-#plt.title()
-plt.show()
-#print(X)
-#print(y)
- 
-plt.show()
+    for d in f:
+        data.append([])
+        dd = d[:len(d)-1].split(",", 10)
+        for i in range(2, 9):
+            data[cnt].append(int(dd[i]))
+        cnt += 1
+
+    f.close()
+    
+    #對所有資料做正規化，以防算距離時影響結果
+    min_max_scaler = preprocessing.MinMaxScaler()
+    normalize = min_max_scaler.fit_transform(data)
+
+    return normalize
+
+#分資料集 training set：test set = 7 : 3
+def train_test_split(data):
+    import random
+    train_data = dict()
+    train_label = dict()
+    test_data = dict()
+    test_label = dict()
+
+    random.shuffle(data)
+
+    train_cnt = 0
+    test_cnt = 0
+
+    for train_cnt in range(0, len(data)):
+        if train_cnt < (len(data) * 0.7):
+            train_data[train_cnt] = (data[train_cnt][0], data[train_cnt][1], data[train_cnt][2], data[train_cnt][3], data[train_cnt][4], data[train_cnt][5])
+            train_label[train_cnt] = data[train_cnt][6]
+        else:
+            test_data[test_cnt] = (data[train_cnt][0], data[train_cnt][1], data[train_cnt][2], data[train_cnt][3], data[train_cnt][4], data[train_cnt][5])
+            test_label[test_cnt] = data[train_cnt][6]
+            test_cnt += 1
+
+    
+    return train_data, train_label, test_data, test_label
+
+class Calc_result:
+    def __init__(self, dist, label):
+        self.dist = dist
+        self.label = label
+    
+    def get_dist(self):
+        return self.dist
+    
+    def get_label(self):
+        return self.label
 
 
-# def read_dataset():
-#     f = open("machine.data", "r")
-#     cnt = 0
-#     data = dict()
+def euclidean_distance(x, y):
+    import math
+    if len(x) != len(y):
+        return 0
+    
+    sum = 0
+    for i in range(0, len(x)):
+        sum += math.pow(math.fabs(float(x[i]) - float(y[i])), 2)
 
-#     for d in f:
-#         #因為dataset有問號的資訊，無法被判斷數值，所以此資料跳過
-#         if d.find('?') == -1:
-#             dd = d[:len(d)-1].split(",", 10)
-#             data[cnt] = (dd[2], dd[3], dd[4], dd[5], dd[6], dd[7], dd[8], dd[9])
-#             cnt += 1
+    return math.sqrt(sum)
+
+#算所有test data的class
+def knn_with_all(res, k = 3):
+    predict = dict()
+
+    for i in range(0, len(res)):
+        predict[i] = knn_regression(res[i], k)
+
+    return predict
+
+def knn_regression(one_res, k):
+    sum = 0.0
+    if k > len(one_res):
+        return 0
+
+    for i in range(1, k):
+        sum += float(one_res[i].get_label())
+    
+    return sum/k
+
+def sort_cmp(elem):
+    return elem.get_dist()
+
+#使用均方根誤差來判斷Knn regression的結果好壞
+def root_mean_square_error(expect, actual):
+    import math
+    error = []
+
+    for i in range(0, len(expect)):
+        error.append(float(expect[i]) - float(actual[i]))
+  
+    squaredError = []
+    for var in error:
+        squaredError.append(math.pow(var, 2))
+
+    return math.sqrt(sum(squaredError) / len(squaredError))
+
+def knn_execute(dataset):
+    train_data, train_label, test_data, test_label = train_test_split(dataset)
+    res = []
+
+    #計算所有測資的距離
+    for i in range(0, len(test_data)):
+        tmp = []
+        for j in range(len(train_data)):
+            dist = euclidean_distance(test_data[i], train_data[j])
+            tmp.append(Calc_result(dist, train_label[j]))
         
-#     f.close()
+        res.append(tmp)
 
-#     return data
+    #排序計算後距離
+    for i in range(0, len(test_data)):
+        res[i].sort(key=sort_cmp)
 
-# if __name__ == '__main__':
-#     dataset = read_dataset()
-#     print(dataset)
-#     accu_array = []
-#     accuracy = []
+    rmse_array = []
+    #計算結果k = 3 ~ 15
+    for i in range(3, 16):
+        predict = knn_with_all(res, i)
+        rmse = root_mean_square_error(predict, test_label)
+        rmse_array.append(rmse)
+
+    return rmse_array
+
+if __name__ == '__main__':
+    dataset = read_dataset()
+    rmse = []
+    rmse_array = []
+
+    for i in range(0, 13):
+        rmse_array.append(0.0)
+
+    for i in range(0, 10):
+        rmse.append(knn_execute(dataset))
+        for j in range(0, len(rmse[i])):
+            rmse_array[j] += rmse[i][j]
+
+    for i in range(3, 16):
+        print("k =", i, "error is ", end='')
+        rmse_array[i-3] = rmse_array[i-3]/10
+        print(rmse_array[i-3])
+
+    #畫圖
+    import numpy as np
+    import matplotlib.pyplot as plt
+
+    plt.plot(range(3, 16), rmse_array)
+    plt.show()
+    
 

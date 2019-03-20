@@ -26,18 +26,25 @@ def read_dataset():
     return data
 
 if __name__ == '__main__':
-    dataset = read_dataset()
-    # print(dataset)
     import numpy as np
-    # print(dataset[1])
+    
+    dataset = read_dataset()
     X = np.vstack((dataset[0], dataset[1], dataset[2], dataset[3], dataset[4], dataset[5], dataset[6], dataset[7], dataset[8]))
-    res = np.cov(X)
-    coef = np.corrcoef(res)
-
-    # for i in res:
-    #     for j in i:
-    #         print(str(np.round(j, 3)) + "  ", end='')
-    #     print()
-    # print(np.round(res, 3))
+    # res = np.cov(X)
+    coef = np.corrcoef(X)
     print(np.round(coef, 3))
-    # print(np.cov(dataset[0], dataset[1])#, dataset[2], dataset[3], dataset[4], dataset[5], dataset[6], dataset[7], dataset[8]))
+
+    cnt = 0
+    strong_class = []
+    for i in range(0, len(coef)):
+        strong_class.append([])
+        for j in range(0, len(coef[i])):
+            #若相關係數大於0.5則視為兩屬性相關
+            if i != j and coef[i][j] >= 0.5:
+                strong_class[i].append(j+2)
+
+    for i in range(0, len(coef)):
+        if len(strong_class[i]) != 0:
+            print("Attribute", i+2, "has strong correlation with attribute", strong_class[i])
+        else:
+            print("Attribute", i+2, "has weak correlation with every attribute.")
