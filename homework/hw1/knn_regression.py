@@ -1,5 +1,4 @@
 def read_dataset():
-    from sklearn import preprocessing
     import numpy as np
     f = open("machine.data", "r")
     cnt = 0
@@ -9,16 +8,29 @@ def read_dataset():
         data.append([])
         dd = d[:len(d)-1].split(",", 10)
         for i in range(2, 9):
-            data[cnt].append(int(dd[i]))
+            data[cnt].append(float(dd[i]))
         cnt += 1
 
     f.close()
     
     #對所有資料做正規化，以防算距離時影響結果
-    min_max_scaler = preprocessing.MinMaxScaler()
-    normalize = min_max_scaler.fit_transform(data)
+    normalization = normalize(data)
 
-    return normalize
+    return normalization
+
+#正規化(x - min)/(max - min)
+def normalize(data):
+    import numpy as np
+    trans_data = np.transpose(data)
+
+    for i in range(0, len(trans_data)):
+        tmp_min = min(trans_data[i])
+        tmp_max = max(trans_data[i])
+        for j in range(0, len(trans_data[i])):
+            trans_data[i][j] = (trans_data[i][j] - tmp_min) / (tmp_max - tmp_min)
+
+    return np.transpose(trans_data)
+
 
 #分資料集 training set：test set = 7 : 3
 def train_test_split(data):
@@ -144,7 +156,7 @@ if __name__ == '__main__':
             rmse_array[j] += rmse[i][j]
 
     for i in range(3, 16):
-        print("k =", i, "error is ", end='')
+        print("k =", i, "root mean squre error is ", end='')
         rmse_array[i-3] = rmse_array[i-3]/10
         print(rmse_array[i-3])
 
@@ -152,6 +164,8 @@ if __name__ == '__main__':
     import numpy as np
     import matplotlib.pyplot as plt
 
+    plt.ylabel("RMSE")
+    plt.xlabel("K")
     plt.plot(range(3, 16), rmse_array)
     plt.show()
     
